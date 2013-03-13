@@ -1,0 +1,78 @@
+An IRC Chat within #openstack-nova leading to our logic hopefully?
+
+
+##Now Talking in #OpenStack-Nova##
+sirushti> Hey all, i just had a discussion at #openstack-101 and i was redirected here. Here's the paste. http://paste.openstack.org/show/33468/. I'm basically trying to write a new scheduler for nova where VM's are provisioned from Public Clouds rather than Nova-Compute. A bursting mechanism i suppose.
+<sirushti> and so i was wondering about it's feasibility.
+<comstud> sirushti: So you just want to gain some scheduler logic in front of 'remote' clouds?
+<comstud> sirushti: Ignoring the use case, which I'm not sure I fully get, I think what you want is a new 'virt' driver that talks to public APIs of other clouds.
+<comstud> But that's kinda funky
+<sirushti> Ah yes, i'll explain
+<sirushti> So the use case would be to burst into public clouds when the load in the private cloud is high, so i read through the code
+<sirushti> I can see scheduler needs nova-compute running on the Host to provision VM's
+<comstud> Ah
+<comstud> Got it
+<sirushti> what i'm stuck at now is if i should do this as a separate component or integrate this within Nova itself
+<comstud> I think a correct implementation will be quite different than the quick thing you're trying to do
+<comstud> But...
+<sirushti> Couple of ways i thought of is implementing it at scheduler level or at the Virt Level within Nova
+<comstud> You can certainly make this work...
+<sirushti> Oh, ok , please continue
+<comstud> with a bit of coding :)
+<comstud> Here's what I am thinking:
+<sirushti> a bit? :) 
+<comstud> haha yea.  more than a bit.  Create a new virt driver that talks public cloud APIs.
+<comstud> Start up nova-compute with this new virt driver.
+<comstud> Normally filter out that nova-compute when you do scheduling... but if you determine you want to burst...
+<comstud> have the scheduler send the build req over to that nova-compute
+<comstud> Then it can build in other clouds... and it'll have to do polling and so forth to sync states with the instances in OpenStack
+<comstud> Ie, you'll have most of your nova-computes using libvirt driver or xenapi driver, etc... but also a nova-compute that uses this new virt driver to talk to public clouds
+<comstud> Does that make sense?  I don't think that's the correct long term solution for nova, but..
+<sirushti> Ah, that's exactly what i wanted :) Part of the plan was to introduce scaling policies which i'm guessing i should read up about HEAT more to conclude anything about that.
+<sirushti> Ok, so i've a bit of a doubt here conceptually. Since a compute node has nova-compute service running in, are we provisioning VM's from EC2 using the virt driver or are we treating the EC2 VM's as hosts themselves?
+<sirushti> Also, I wonder what the correct way to do this would be :)
+<comstud> provisioning VMs from EC2 using new virt driver
+<comstud> You can perhaps name them in EC2 by nova's instance_uuid...
+<comstud> Then do polling to EC2 to update nova's instance record for like vm_state, etc, for that uuid
+<comstud> sirushti: I want to say the better way somehow involves the 'cells' code in nova.
+<comstud> but that's too much for me to think about right now ;)
+<comstud> For the new virt driver idea, you'd end up with a nova-compute that has instances assigned to its host... but the instances actually live somewhere else.
+<sirushti> Yes, i was thinking of a seperate component at first including Cells,Heat and Nova but then i was compelled to try something with just Nova for now since i'm just starting out now.
+<comstud> yeah
+<sirushti> comstud I think that sounds like a plan for the situation at present . Once i'm done experimenting, i'll surely and come back and try to contribute more :) Thanks a lot. 
+<comstud> sirushti: No prob
+<comstud> sirushti: We definitely have a huge interest in bursting..  I think it'll take more time to figure out what the 'right way' is.
+
+
+Alright, so here's the explanation of what i've understood, we all know the Calls that are being made now within Nova go something like this.
+Nova-api->Nova-Compute-api->Nova-Scheduler->Nova-Compute->Nova-Virt
+
+We're worried here more about Scheduler, Compute and Virt.So Scheduler and Virt both have the INTERFACE driver.py.
+So we've been confused at this stage as to where to implement our strategy. After this chat, it seems like we've to make our own virtualization driver and then that will communicate to EC2.
+So , our assumption now is that we have one host that will be communicate with EC2. Assume this host has unlimited VM's that will provision VM's from elsewhere(i.e the public cloud in our case).Only this Host will run a nova-compute service that will use our Virtualisation Driver. Others will use default driver. E.g KVM.
+
+This is the proposed solution for now to Provision VM's...
+
+Nova-api->Nova-Compute-api->Nova-Scheduler(Multi-Scheduler)
+###Multi-Scheduler is a Scheduler that can chose different Schedulers Based on Flags.
+(Multi-Scheduler -> Existing Filter Scheduler) OR (Multi-Scheduler -> Hybrid Scheduler) #Scaling Policies will decide this i.e query the HEAT API.
+	Get Vm's from Filter Scheduler->Compute->Virt->KVM,Xen,etc
+	Get VM's from Hybrid Scheduler->Compute->Virt->EC2,Rackspace,etc
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Another solution to go about this would be to isolate ourselves from the OpenStack Code and just query OpenStack API's and some other public cloud API like what Aeolus did -> http://www.aeolusproject.org/about.html
+This will create a central management system.
+
+That would be roughly something like:
+
+Have our own Controller that polls for usage information from private cloud.
+Then use the HEAT api for scaling policies. 
+Provision VM's necessarily.
+Burst to public cloud when in-house infrastructure is high.
+Use HEAT again to Scale-Down
+Keep in mind that all this is by just using the API's of different services OpenStack provides and there is no change whatsoever being done within the Code of of each service.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+A Demo Use-Case of our project would be to use OpenShift. OpenShift is basically creates a PaaS layer using existing infrastructure. Check it out -> https://openshift.redhat.com/app
