@@ -1,0 +1,24 @@
+We have divided our project into  chunks of deliverables and setup timelines to achieve them respectively.
+
+#Week1: Implementation of a Virtual Driver.
+
+A Virtual Driver is a component which will handle the responsibility of talking to the public clouds using the API's and provisioning the VM's , from the design perspective this component will handle the functionality of the "Federated Compute Manager" , In a nutshell we will have a host running Nova compute over our virtual Driver.
+
+#Week2: Implementation of the Virtual Driver - addition of Features. Eg: Interface for Bursting , Integrity Tests.
+
+#Week3: Implementation of the Scheduler.
+
+The scheduler decides on which host a VM has to be spawned. Our Present plan includes a Multi-Scheduler that uses a two scheduler architecture based on flags. One Scheduler will take care of Scheduling VM's withing the private cloud and another scheduler will take care of provisioning VM's from the public Cloud if necessary.
+
+#Week4: Implementation of the Scheduler , Integrity Tests.
+
+#Week5: Implementation of the Policy Manager(Orchestrating Layer) 
+
+Policy manager will decide if the bursting is required , if so, it will direct the scheduler to send the burst request to the host running our Virtual driver which will provision the VM's from the public cloud. Current Plan is to implement HEAT. Heat is a service to orchestrate multiple composite cloud applications using the AWS CloudFormation template format.
+
+#Week6: Integrity Tests, addition of Features.
+
+#Week7: Use case demo set up and continuation of testing and future plan strategy.
+
+
+This is our 7 week plan, we will split the junior team accordingly and assign them tasks in parallel.
