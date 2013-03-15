@@ -63,7 +63,8 @@ Nova-api->Nova-Compute-api->Nova-Scheduler(Multi-Scheduler)
 Possible Issues being faced right now:
 - Data Structure Mapping between EC2 & OpenStack
 - Network Strategy(VPC?), Associating OpenStack Private IP to EC2 VM.
-- Instance DB Sync/Updates.
+ - Instance DB Sync/Updates.(UUID?)
+ - Instance State Updates
 - Depth of Understanding with VirtAPI.
 - Block Device migrate strategy.
 
