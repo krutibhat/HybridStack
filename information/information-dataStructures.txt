@@ -1,0 +1,69 @@
+Self
+----
+{'_compute_event_callback': <bound method ComputeManager.handle_events of <nova.compute.manager.ComputeManager object at 0x2e17d90>>,
+ 'conn': EC2Connection:ec2.us-east-1.amazonaws.com,
+ 'virtapi': <nova.compute.manager.ComputeVirtAPI object at 0x2e1ed50>}
+
+Context
+-------
+{'conf': <oslo.config.cfg.ConfigOpts object at 0x7f792961d590>,
+ 'msg_id': None,
+ 'reply_q': None,
+ 'values': {'auth_token': u'9ffe419ce1ac40efa3c7e1a1385278f5',
+            'instance_lock_checked': False,
+            'is_admin': True,
+            'project_id': u'4beee8cc3a264b0bbb01421149ac5360',
+            'project_name': u'admin',
+            'quota_class': None,
+            'read_deleted': u'no',
+            'remote_address': u'192.168.1.10',
+            'request_id': u'req-d3aa04e9-215c-4170-afa7-dbf251bbb6f6',
+            'roles': [u'admin'],
+            'service_catalog': [{u'endpoints': [{u'adminURL': u'http://192.168.1.10:8776/v1/4beee8cc3a264b0bbb01421149ac5360',
+                                                 u'id': u'137908cd6d7049209c690adcf13f1a8c',
+                                                 u'internalURL': u'http://192.168.1.10:8776/v1/4beee8cc3a264b0bbb01421149ac5360',
+                                                 u'publicURL': u'http://192.168.1.10:8776/v1/4beee8cc3a264b0bbb01421149ac5360',
+                                                 u'region': u'RegionOne'}],
+                                 u'endpoints_links': [],
+                                 u'name': u'cinder',
+                                 u'type': u'volume'}],
+            'tenant': u'4beee8cc3a264b0bbb01421149ac5360',
+            'timestamp': u'2013-03-15T19:38:19.631058',
+            'user': u'e5102433387b4896a9d075e57423dc99',
+            'user_id': u'e5102433387b4896a9d075e57423dc99',
+            'user_name': u'admin'}}
+
+
+Image Meta
+----------
+{'checksum': 'f8a2eeee2dc65b3d9b6e63678955bd83',
+ 'container_format': 'ami',
+ 'created_at': datetime.datetime(2013, 3, 15, 19, 26, 31, tzinfo=<iso8601.iso8601.Utc object at 0x3b3a610>),
+ 'deleted': False,
+ 'deleted_at': None,
+ 'disk_format': 'ami',
+ 'id': '6a06861f-b9fa-4781-8b32-a8e91bc4db65',
+ 'is_public': True,
+ 'min_disk': 0,
+ 'min_ram': 0,
+ 'name': 'cirros-0.3.1-x86_64-uec',
+ 'owner': '4beee8cc3a264b0bbb01421149ac5360',
+ 'properties': {'kernel_id': '0294f3ff-4ded-40ed-bbad-a04316159444',
+                'ramdisk_id': '7e888168-1dff-4620-8bd0-a074e4d9c441'},
+ 'size': 25165824,
+ 'status': 'active',
+ 'updated_at': datetime.datetime(2013, 3, 15, 19, 26, 31, tzinfo=<iso8601.iso8601.Utc object at 0x3b3a610>)}
+
+
+Network Info
+------------
+[VIF({'ovs_interfaceid': None, 'network': Network({'bridge': u'br100', 'subnets': [Subnet({'ips': [FixedIP({'meta': {}, 'version': 4, 'type': u'fixed', 'floating_ips': [], 'address': u'10.4.128.2'})], 'version': 4, 'meta': {u'dhcp_server': u'10.4.128.3'}, 'dns': [IP({'meta': {}, 'version': 4, 'type': u'dns', 'address': u'8.8.4.4'})], 'routes': [], 'cidr': u'10.4.128.0/20', 'gateway': IP({'meta': {}, 'version': 4, 'type': u'gateway', 'address': u'10.4.128.1'})}), Subnet({'ips': [], 'version': None, 'meta': {u'dhcp_server': u'10.4.128.3'}, 'dns': [], 'routes': [], 'cidr': None, 'gateway': IP({'meta': {}, 'version': None, 'type': u'gateway', 'address': None})})], 'meta': {u'tenant_id': None, u'multi_host': True, u'should_create_bridge': True, u'bridge_interface': u'eth0'}, 'id': u'88fc439e-79af-4648-8610-972e77930d45', 'label': u'private'}), 'devname': None, 'qbh_params': None, 'meta': {}, 'address': u'fa:16:3e:1b:9a:6b', 'type': u'bridge', 'id': u'2f59c379-bc9c-4b0e-9a1c-f381e0a8cbf3', 'qbg_params': None})
+
+
+Block Device Info
+-----------------
+{'block_device_mapping': [],
+ 'ephemerals': [],
+ 'root_device_name': None,
+ 'swap': None}
+

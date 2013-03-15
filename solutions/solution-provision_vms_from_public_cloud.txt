@@ -84,4 +84,4 @@ Keep in mind that all this is by just using the API's of different services Open
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-A Demo Use-Case of our project would be to use OpenShift. OpenShift is basically creates a PaaS layer using existing infrastructure. Check it out -> https://openshift.redhat.com/app
+A Demo Use-Case of our project would be to use OpenShift. OpenShift basically creates a PaaS layer using existing infrastructure. Check it out -> https://openshift.redhat.com/app
