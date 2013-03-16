@@ -1,3 +1,6 @@
+Set of Data Structures at the beginning of the Spawn function. Also, check on nova/db/sqlalchemy/models.py. It contains the data representation of nova's different data Objects.
+
+
 Self
 ----
 {'_compute_event_callback': <bound method ComputeManager.handle_events of <nova.compute.manager.ComputeManager object at 0x2e17d90>>,
@@ -67,3 +70,4 @@ Block Device Info
  'root_device_name': None,
  'swap': None}
 
+...
