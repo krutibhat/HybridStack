@@ -1,0 +1,7 @@
+As soon as stack.sh finishes, please go into screen mode right away. It displays the status/debug/error logs of every service that is running on that host.
+
+Screen mode is entered by using '$ screen -x'.
+To navigate through the logs of the services hit "Ctrl-a ' <no. attached to the service>" Eg:- "Ctrl-a ' 7" = n-cpu(Nova-Compute) service logs/debug output.
+To enter Copy Mode, hit "Ctrl-a Esc" and then you can scroll up/down.
+
+If you've written any code, and you want to test its behaviour within OpenStack, you can simply go to the service of which you wrote the code for , hit Ctrl-C and press UP and then press the enter button. DevStack will recompile your code and then bring up the service with the modified changes. You can also set breakpoints in the middle and then debug. So when you actually recompile the code and run your service, your debug terminal is opened and you can execute your debug commands. 
