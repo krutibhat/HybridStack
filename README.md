@@ -1,4 +1,4 @@
-Information Repository for now. Project: Extend OpenStack to support Public Clouds.
+Information Repository for now. Project: Extend OpenStack extension to Hybrid Cloud Architecture.
 
 RULES: Please commit all the information you get in a well-explained fashion of how you've understood it. 
 Links can be pasted as a reference to your explanation but the aim of this mechanism is to commit concise explanations and how it will help us in this project.
