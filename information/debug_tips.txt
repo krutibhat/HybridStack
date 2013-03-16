@@ -1,0 +1,156 @@
+ipdb has been a wonderful debugging/tracing tool so far.
+To stop execution of code at any point, set a breakpoint by typing 'import ipdb; ipdb.set_trace()' before the function call. 
+The execution of code is then stopped and then the ipdb terminal is opened up.
+
+(TODO : Edit the description. better explanation,better examples?)
+Some of the useful commands are:-
+
+s : Step into the function
+n : next line in execution
+w : where are we? partial trace
+l : print the lines preceding and succeeding
+r : return from function
+
+Examples
+--------
+ipdb> w
+  /usr/lib/python2.7/dist-packages/eventlet/greenpool.py(80)_spawn_n_impl()
+     78         try:
+     79             try:
+---> 80                 func(*args, **kwargs)
+     81             except (KeyboardInterrupt, SystemExit, greenlet.GreenletExit):
+     82                 raise
+
+  /opt/stack/nova/nova/openstack/common/rpc/amqp.py(393)_process_data()
+    391         ctxt.update_store()
+    392         try:
+--> 393             rval = self.proxy.dispatch(ctxt, version, method, **args)
+    394             # Check if the result was a generator
+
+    395             if inspect.isgenerator(rval):
+
+  /opt/stack/nova/nova/openstack/common/rpc/dispatcher.py(133)dispatch()
+    131                 continue
+    132             if is_compatible:
+--> 133                 return getattr(proxyobj, method)(ctxt, **kwargs)
+    134 
+    135         if had_compatible:
+
+  /opt/stack/nova/nova/exception.py(94)wrapped()
+     92             # contain confidential information.
+
+     93             try:
+---> 94                 return f(self, context, *args, **kw)
+     95             except Exception, e:
+     96                 with excutils.save_and_reraise_exception():
+
+  /opt/stack/nova/nova/compute/manager.py(196)decorated_function()
+    194     def decorated_function(self, context, *args, **kwargs):
+    195         try:
+--> 196             return function(self, context, *args, **kwargs)
+    197         except exception.UnexpectedTaskStateError:
+    198             # Note(maoy): unexpected task state means the current
+
+
+  /opt/stack/nova/nova/compute/manager.py(261)decorated_function()
+    259                                          event_name, instance_uuid):
+    260 
+--> 261             function(self, context, *args, **kwargs)
+    262 
+    263     return decorated_function
+
+  /opt/stack/nova/nova/compute/manager.py(225)decorated_function()
+    223     def decorated_function(self, context, *args, **kwargs):
+    224         try:
+--> 225             return function(self, context, *args, **kwargs)
+    226         except exception.InstanceNotFound:
+    227             raise
+
+  /opt/stack/nova/nova/compute/manager.py(1168)run_instance()
+   1166                     filter_properties, requested_networks, injected_files,
+   1167                     admin_password, is_first_time, node, instance)
+-> 1168         do_run_instance()
+   1169 
+   1170     def _shutdown_instance(self, context, instance, bdms):
+
+  /opt/stack/nova/nova/openstack/common/lockutils.py(242)inner()
+    240                                 shutil.rmtree(local_lock_path)
+    241                     else:
+--> 242                         retval = f(*args, **kwargs)
+    243 
+    244                 finally:
+
+  /opt/stack/nova/nova/compute/manager.py(1167)do_run_instance()
+   1165             self._run_instance(context, request_spec,
+   1166                     filter_properties, requested_networks, injected_files,
+-> 1167                     admin_password, is_first_time, node, instance)
+   1168         do_run_instance()
+   1169 
+
+  /opt/stack/nova/nova/compute/manager.py(796)_run_instance()
+    794                                            network_info, block_device_info,
+    795                                            injected_files, admin_password,
+--> 796                                            set_access_ip=set_access_ip)
+    797             except exception.InstanceNotFound:
+    798                 # the instance got deleted during the spawn
+
+  /opt/stack/nova/nova/compute/manager.py(1043)_spawn()
+   1041                               injected_files, admin_password,
+   1042                               self._legacy_nw_info(network_info),
+-> 1043                               block_device_info)
+   1044         except Exception:
+   1045             with excutils.save_and_reraise_exception():
+
+> /opt/stack/nova/nova/virt/ec2api/driver.py(250)spawn()
+    248         """
+    249         import ipdb; ipdb.set_trace()
+--> 250         raise NotImplementedError()
+    251 
+    252     def destroy(self, instance, network_info, block_device_info=None,
+-----------------------------------------------------------------------------
+ipdb> s
+--Call--
+> /usr/lib/python2.7/contextlib.py(82)helper()
+     81     """
+---> 82     @wraps(func)
+     83     def helper(*args, **kwds):
+-----------------------------------------------------------------------------
+ipdb> l
+     77             <body>
+     78         finally:
+     79             <cleanup>
+     80 
+     81     """
+---> 82     @wraps(func)
+     83     def helper(*args, **kwds):
+     84         return GeneratorContextManager(func(*args, **kwds))
+     85     return helper
+     86 
+     87 
+-----------------------------------------------------------------------------
+ipdb> s
+> /usr/lib/python2.7/contextlib.py(84)helper()
+     83     def helper(*args, **kwds):
+---> 84         return GeneratorContextManager(func(*args, **kwds))
+     85  
+-----------------------------------------------------------------------------
+ipdb> r
+--Return--
+<context...x3761b10>
+> /usr/lib/python2.7/contextlib.py(84)helper()
+     83     def helper(*args, **kwds):
+---> 84         return GeneratorContextManager(func(*args, **kwds))
+     85 
+-----------------------------------------------------------------------------
+ipdb> n
+> /opt/stack/nova/nova/compute/manager.py(813)_run_instance()
+    812                     raise
+--> 813             except Exception:
+    814                 exc_info = sys.exc_info()
+
+ipdb> n
+> /opt/stack/nova/nova/compute/manager.py(814)_run_instance()
+    813             except Exception:
+--> 814                 exc_info = sys.exc_info()
+    815                 # try to re-schedule instance:
+----------------------------------------------------------------------------- 
