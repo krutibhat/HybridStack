@@ -68,6 +68,7 @@ Possible Issues being faced right now:
  - Instance State Updates
 - Depth of Understanding with VirtAPI.
 - Block Device migrate strategy.
+- Keep track of mapped data between data structures within a mysql table?
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
