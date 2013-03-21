@@ -1,0 +1,229 @@
+<robr> hi guys, any idea why i get LinuxDistribution F16 not in AllowedValues.
+<robr> error when i'm using heat in devstack?
+<robr> i have downloaded and registered the VM image that Heat can launch..
+<robr> anyone?
+<zaneb> robr: we removed the F16 option from the templates because it's no longer supported
+<zaneb> robr: you can add it back in to the template, or create an F17/F18 image to use
+<robr> how do i create a F17/F18 image? Because the only i downloaded was a F16 image..
+
+<zaneb> you'd need to add F16 to the AllowedValues list for the LinuxDistribution parameter, and add the correct mapping from distro name to image (search for F17, copy, paste, s/17/16)
+<zaneb> sdake_: do we have F17 images available to use with heat?
+<robr> yes. http://fedorapeople.org/groups/heat/prebuilt-jeos-images/
+<robr> there are only F16 and F17 images
+<zaneb> ah, ok, F17 will work
+<robr> F16 won't?
+<zaneb> robr: we removed it from the templates, so no, unless you add it back in to your template as described above ^^
+<zaneb> robr: Fedora 16 is End-of-life
+<robr> Yes. I've added it to the default. 
+<zaneb> https://lists.fedoraproject.org/pipermail/announce/2013-February/003144.html
+<robr> Oh okay. So, without downloading the F17 image , if i specify F17 in the LinuxDistribution parameter, it wont work right?
+<zaneb> no, you'd need the image
+<zaneb> robr: here is the change we made to the templates (they're all pretty much the same): https://github.com/openstack/heat/commit/b2e15ce1f738ee239e0db31ddbbdecc7e8a8c765
+<zaneb> robr: you just need to do the reverse of that and your F16 image will work again
+<zaneb> the LinuxDistribution parameter is just used to choose an image name from the DistroArch2AMI map
+<shardy> robr: As zaneb says s/F18/F18/g in your template is probably all you need to do
+<shardy> s/F18/F16/g even
+<zaneb> lol
+<shardy> Using the F17 image would be better though
+
+<zaneb> yeah, F16 still works fine for playing around, but no security updates so be wary of using it for anything serious
+<robr> cool.
+<robr> i did exactly that. added the mapping to DistroArch2AMI map.
+<robr> but after i execute the heat create stack command given in the getting started page, i always get create_failed.
+<sdake_> robr which distro are you on
+<sdake_> for your host
+<sdake_> run heat list and paste the output
+<sdake_> if on fedora you could do "heat list | fpaste"
+<robr> sdake_ : got it running. Thanks.
+<robr> it says create_complete.
+<sdake> good to hear
+<sdake> did you have any feedback on what went wrong?
+* mestery has quit (Remote host closed the connection)
+<robr> sdake: Normally i have the habit of sourcing the admin file.
+<robr> by going to accrc/admin in devstack dir.
+<robr> when i did source openrc in devstack dir, it took a lot of time but it said status_complete.
+<sdake> if your virt on virt, it will be slow unfortunately
+<robr> yes.
+<sdake> last time I did virt on virt it took 28 minutes to boot the wordpress template
+<robr> :O
+<sdake> bare metal is much faster ;)
+<robr> does it work on other drivers like xenapi or powervm?
+<sdake> I also tried nested kvm virt on intel and that took about 26 minutes
+<sdake> heat uses python-novaclient to launch instances
+<sdake> I would expect xenapi or powervm would be configured as part of nova rather then heat
+<robr> yes. true.
+<robr> btw, i get connection refused when i tried to wget the URL.
+<robr> i didn't assign a ssh key to this instance. is it because of that?
+<sdake> usually you would pass an ssh key id to the template creation
+<sdake> I believe atm heat can't create templates without a key
+<sdake> this is because of fast and dirty hacks elsewhere which will be corrected in next release
+<sdake> but for the moment you will need a key passed as described in the getting started guide
+<shardy> sdake: actually I think Slower fixed (or at least partially fixed) the KeyName limitation:
+<shardy> https://review.openstack.org/#/c/22002/
+<shardy> Looks like we still have a similar issue with the LoadBalancer nested stack tho
+<shardy> bug 1137526
+<uvirtbot> Launchpad bug 1137526 in heat "LoadBalancer resource requires KeyName" [Undecided,New] https://launchpad.net/bugs/1137526
+<sdake> yes that is what I was thinking of
+<sdake> ask.openstack.org will be handy ;)
+<robr> so, whats the fix?
+<sdake> pass a key ie:
+<sdake> heat-cfn create rds --template-file=/home/sdake/repos/heat/templates/WordPress_S
+<sdake> ingle_Instance.template --parameters="InstanceType=m1.large;DBUsername=${USER};D
+<sdake> BPassword=verybadpass;KeyName=${USER}_key
+<sdake> key needs to be registered with nova first
+<sdake> $(USER) will produce your local login id
+<shardy> robr: passing a key also makes debugging problems much easier, since you can ssh onto the instance and tail /var/log/heat-provision.log
+<robr> oh. darn. i already did this. 
+<robr> i followed the instructions given here
+<robr> https://wiki.openstack.org/wiki/Heat/GettingStartedUsingDevstack
+<robr> i did all of them.
+
+<sdake> instructions broken
+
+<sdake> https://github.com/openstack/heat/blob/master/docs/GettingStarted.rst#register-a-ssh-key-pair-with-openstack-nova
+<sdake> https://github.com/openstack/heat/blob/master/docs/GettingStarted.rst#launch-a-wordpress-instance
+<sdake> devstack may register a key automatically - you can tell with nova keypair-list
+<robr> yes. thanks.
+<sdake> i'll correct the instructions
+<robr> last question, whats the default user of the qcow2 image?
+<robr> for me to ssh into it.
+<robr> F16 image in this case.
+<sdake> ec2-user
+
+<robr> i'm able to ping it, but not ssh into it
+<sdake> does a login prompt appear when you try to ssh into it?
+<robr> yes but i don't know which user to sign in as.
+<sdake> ssh ec2-user@10.0.0.1
+<sdake> or whichever your ip is
+<robr> sorry for another noob question, what might be the password?
+<sdake> ssh key is passwordless
+<sdake> ssh -v ec2-user@10.0.0.1
+<robr> ah! Its not able to get determine the key generated while creating the stack.
+<robr> thanks. i'll debug more.
+
+<robr> Hi everyone. I'm getting this error for quite some time now.
+<robr> can anybody tell me where i'm going wrong
+<robr> http://pastebin.com/MQ4BJMCZ
+<robr> i'm watching this tutorial and trying to replicate this: http://www.youtube.com/watch?v=9lLSZi6njq4
+<shardy> robr: Is the user whose keystone credentials are sourced a keystone admin?
+<robr> do i need to register heat with keystone?
+<shardy> robr: yes, there is a script, heat-keystone-setup
+<shardy> but aren't you running devstack?
+<robr> Yes.
+<shardy> IIRC devstack should do that for you then
+<robr> ok, let me walk through the steps.
+<shardy> you can check with keystone service-list
+<shardy> Can you tail /var/log/heat/engine.log and paste the results after the failed create?
+<robr> ok.
+<shardy> and do heat describe <stackname> so we can see the Status Reason (why it's gone CREATE_FAILED)
+<shardy> as I mentioned, you also need to ensure that your sourced keystone credentials are for a user who is in the admin group
+<robr> Failed to delete AccessKey "WebServerKeys"
+<shardy> keystone user-role-list
+* alexheneveld (~alex@host86-131-194-27.range86-131.btcentralplus.com) has joined #heat
+<shardy> need logs to be sure, but my guess is your credentials don't allow you do create/delete keystone users
+<robr> its saying i'm not authorized to perform the requested action
+<robr> so, i need to run as admin?
+<shardy> atm, yes, if you want to use the User, AccessKey or WaitConditionHandle resource types (because they all create a keystone user)
+<shardy> we're working on fixing that, but need some new features in keystone before we can do so
+<shardy> bug 1089261
+<uvirtbot> Launchpad bug 1089261 in heat "Avoid needing admin role for stack create/delete" [High,Triaged] https://launchpad.net/bugs/1089261
+<robr> ok, so i source admin and execute the commands?
+<shardy> yes, then it should work
+<shardy> the basic wordpress templates (or any templates not using the resources mentioned above) don't need admin
+<robr> ah, thats why it was working yesterday.
+
+<shardy> robr: The fact that you can't delete the CREATE_FAILED stack looks like a bug, I'll look into it
+
+<robr> shardy: cool.
+<robr> shall i file one?
+<shardy> robr: sure, please do
+
+<robr> shardy: Failed to delete AccessKey "WebServerKeys"
+<robr> shardy: https://bugs.launchpad.net/heat/+bug/1158318
+<uvirtbot> Launchpad bug 1158318 in heat "Cannot delete a STATUS_FAILED stack as demo user" [Undecided,New]
+<robr> sorry for the top link.
+<robr> i'm a noob at creating a bug, do let me know if i have to add extra details.
+<zaneb> robr: if you could do stack describe after the delete fails, (or, even better, attach the end of /var/log/heat/engine.log) that will give us the debugging information we need to work out why it is failing
+<shardy> zaneb: I suspect the non-admin user is failing to create the keystone user/ec2-keypair, then we're erroneously failing to clean that up on delete for the same reason
+<zaneb> most likely
+<shardy> need to test to confirm that, and agree, logs would be most helpful :)
+<zaneb> yeah
+
+<zaneb> + we want to encourage people to include stuff like this in every bug report
+<zaneb> "something failed" is sometimes enough to go on, but usually not so much
+<robr> yes. one minute
+<robr> sorry, i didn't have screen -x enabled when i got the error, its lost in a sea of logs.
+<robr> will i recreate it and display the error?
+<zaneb> robr: if the stack is still there then just "heat describe" should be enough to confirm in this instance
+<shardy> zaneb: what's the heatclient equivalent to event-list?
+<shardy> that should show us the StatusReason for both the CREATE_FAILED and DELETE_FAILED transitions
+<zaneb> don't know, I've never installed heatclient
+<zaneb> true
+<shardy> zaneb: so despite writing most of the ReST API, you're still using the CFN API?
+<robr> shardy: shall i paste the whole thing?
+* shardy is too ;)
+<zaneb> shardy: mostly I just write code and commit it ;)
+<shardy> robr: sure, attach the whole engine.log to the bug and I'll figure it out
+<zaneb> I had a bunch of curl scripts for testing the ReST API as I was writing it
+<shardy> I have actually been using heatclient a bit more recently - the o/p format is much nicer than heat-cfn
+<zaneb> yeah, next time I actually want to run Heat I will probably try it out
+* sthaha has quit (Quit: Leaving)
+<robr> shardy: sorry. i didn't have logs enabled. i check all the logs using screen -x :\
+<shardy> robr: no problem, pls enable them for future bug reports, but I'm fairly confident I'll be able to reproduce - will let you know if I need any more info
+<robr> definitely :)
+<robr> i've posted the output of heat describe stack in the description
+<zaneb> thanks robr
+<shardy> yep, thanks for the report robr, I've taken the bug and am looking into it now
+<robr> shardy: thanks
+
+
+ 
+<sdake> i'll be out of the office for ~1 hr bbl
+<robr> just a question, can't i use F16 image while creating a stack from autoscalingmultiazsample.template
+
+<shardy> robr: No, because the nested loadbalancer needs F17
+<shardy> Or rather it has a hard-coded "ImageId": "F17-x86_64-cfntools"
+<shardy> you could change that, but it's probably much easier to just download the F17 jeos
+* SpamapS is so happy quantum will do this soon
+<SpamapS> shardy: I cheated and just named a Fedora image built with our diskimage-builder F17-x86_64-cfntools .. :)
+<robr> yeah. sorry.
+
+<robr> hi. can we use create our own image to be used in heat using heat-jeos
+<robr> can we create*
+<shardy> robr: yes, using the "Alternatively..." steps in:
+<shardy> https://github.com/openstack/heat/blob/master/docs/GettingStarted.rst#readme
+<shardy> note the location of heat-jeos moved, I notice the URL is wrong
+<shardy> it should now be:
+<shardy> https://github.com/sdake/heat-jeos
+<shardy> sdake: is there a plan for heat-jeos to live somewhere other than your GH account now heat-api org is gone?
+<shardy> robr: You will need to run heat-jeos on bare-metal, it won't work inside your devstack VM AFAIK
+<robr> yes i understand.
+<openstackgerrit> Steven Hardy proposed a change to openstack/heat: heat getting started : fix heat-jeos URL  https://review.openstack.org/25032
+<shardy> robr: also if you're running on Fedora, make sure it's F17 or F18 and that it's fully updated - there were some bugs a few weeks back (in Fedora) which broke heat-jeos
+<shardy> I've tested it today (on fully updated F18) and it works fine now
+<robr> i'm just wondering how it might play our in this situation: lets say i have an uec image running. can this uec image be made to work with heat using heat-jeos?
+<robr> play out*
+<shardy> robr: not currently, heat-jeos builds you a new image from scratch
+<robr> what sort of images can be made to run other than the pre-built ones?
+<shardy> you could hack an existing image either manually or using libguesfs if you need to, but heat-jeos won't automate that for you
+<shardy> robr: Any image really, provided you can install cloud-init and our in-instance tools (heat-cfntools)
+<shardy> If you look in the heat-jeos TDL's, you could boot an image and cut/paste the steps manually into a terminal for a test image
+<shardy> https://github.com/sdake/heat-jeos/blob/master/heat_jeos/jeos/F18-x86_64-cfntools.tdl
+<shardy> basically do everything in the <commands> section
+<robr> oh okay.
+<shardy> s/libguesfs/libguestfs or guestfish
+<robr> line 14 to 19 is all that is required to convert a test image into heat bootable image?
+<shardy> robr: For Fedora, yes that should be the case
+<robr> what if i'm using ubuntu?
+<robr> shardy: it shouldn't change much i guess.
+<shardy> basically the same, but Ubuntu names the pip package differently IIRC and they don't use systemd
+<shardy> https://github.com/sdake/heat-jeos/blob/master/heat_jeos/jeos/U12.10-amd64-cfntools.tdl
+<shardy> Oh, pip package is the same, the binary is different
+<shardy> note the pinning of the boto version, too old or too new versions currently don't work with heat (we're working on fixing this)
+<robr> so only 2.5.2?
+<shardy> No, but that's the version in F17 so we've all tested it and know it works
+<robr> shardy: that shouldn't be a problem.
+<shardy> >=2.4.0 should work, I'm not sure which version broke us recently, but it's probably too new to be in any distros
+<robr> shardy: sorry to be a pain in the ass, but the install type isn't limited to only iso right?
+<shardy> I guess you can install using any method supported by oz
+<shardy> heat-jeos is just a wrapper for oz-install really

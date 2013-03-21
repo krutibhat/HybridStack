@@ -1,0 +1,81 @@
+<shardy> pavan: It is a nested template, which uses haproxy
+<shardy> pavan: https://github.com/openstack/heat/blob/master/heat/engine/resources/loadbalancer.py
+<shardy> essentially we launch an instance and configure it as a loadbalancer
+<pavan> and what will happen when the treshold reaches?
+<pavan> Another instance is spawned?
+<shardy> pavan: Yes, if you have an autoscaling group behind the loadbalancer
+<shardy> see templates/AutoScalingMultiAZSample.template
+* radez_g0n3 is now known as radez
+* susanne-balle (~BalleS@c-75-68-88-186.hsd1.nh.comcast.net) has joined #heat
+<pavan> shardy: Oh okay. Will do.
+* mestery (~mestery@nat/cisco/x-glkitajxctxfcvvs) has joined #heat
+<pavan> shardy: just a thought. Can we configure the template file to spawn a ec2 instance? 
+<pavan> shardy: Or is it very tightly coupled with nova?
+<pavan> shardy: Usecase, If the load reaches a treshold, spawn a ec2 instance to handle the load instead of another openstack instance.
+<shardy> pavan: heat is an openstack project, we don't have any integration with AWS services
+<pavan> shardy: I know. Leave the implementation details. Can it be done is what i am asking?
+<shardy> If you really wanted to do that, I guess you could probably write a custom resource type via a plugin, which did what you need
+<shardy> pavan: Yes, technically it's possible, you'd define your own custom loadbalancer resource, via a bespoke plugin, which would talk to both nova, and AWS (e.g via boto)
+<shardy> I'm pretty sure we won't offer such functionality as part of heat though, you'd have to roll-your-own
+<pavan> shardy: yes i understand. Just a thought. Was looking at the concept of scaling between 2 clouds.
+<pavan> since, heat is the perfect orchestration engine, was just wondering if it was possible to do it with heat. Cool then.
+<shardy> pavan: There is some work underway to make heat work with deltacloud as a backend, so perhaps that might be a better starting point - move the cloud-provider choice down to the deltacloud layer, instead of adding (probably significant) complexity to heat
+<shardy> pavan: You may want to look at what shadower and Slower have been doing, I think heat integrated with deltacloud/aeolus may be close to what you describe
+* shardy looks for a link
+<pavan> shardy: does heat uses deltacloud by any chance? to spawn a new instance or calls the scheduler to do it?
+<shardy> shadower: ^^ Do you have a link describing the heat/aeolus/deltacloud work?
+<shadower> pavan: Heat by default works with OpenStack but there is support for third-party backends
+<shadower> I wrote one for Deltacloud
+<shadower> https://github.com/tomassedovic/deltacloud_heat
+<pavan> shadower: awesome. is there a github link?
+<shadower> just sent it
+<pavan> shadower: so, using deltacloud we can make calls to different cloud providers to provision vms?
+<shadower> yes, that's the plan
+<shadower> it's a bit early though
+<shadower> I'd say it's in the alpha stage
+<shadower> but you can try it out and patches are welcome :-)
+<pavan> shadower: Thanks for this. I'll definitely contribute.
+<shadower> fantastic!
+<shardy> pavan: Sounds like deltacloud is the way to go, but FYI here's the wiki page re user-defined resource plugins:
+<shardy> https://wiki.openstack.org/wiki/Heat/Plugins
+<pavan> shardy: thank you. any idea why https://github.com/heat-api is broken?
+<shardy> pavan: most of our repos moved under github.com/openstack
+<shardy> https://github.com/openstack/heat
+<pavan> I must say, you guys are the most helpful people on irc IMO.
+<shardy> pavan: probably a few stale links around, pls feel free to fix any you find in the wiki ;)
+<pavan> shardy: definitely, i'll try and fix bugs, post this on my blog etc., soon. 
+<pavan> shardy: if i get stuck anywhere , hope you and shadower won't mind me sticking around here and asking questions.
+<pavan> or anyone for that matter ;)
+<shardy> pavan: Sure, feel free, contributions and questions very welcome :)
+<pavan> shardy: I want to trace the function calls made after i launch a stack, any pointers on where i can start?
+<shardy> pavan: If it's one resource you're interested in, easiest thing is to add a few debug prints to the resource implementation
+<shardy> each resource is implemented in a file under heat/engine/resources
+<shardy> e.g heat/engine/resources/loadbalancer.py::LoadBalancer
+<shardy> The main lifecycle operations are implemented by the handle_* functions, e.g handle_create
+<pavan> shardy: Proabably a silly question. What is a resource your referring to?
+<pavan> shardy: or is it cpu time, memorry usage etc.,
+<shardy> pavan: I mean resource, as in the resource type defined in the template
+<shardy> e.g AWS::ElasticLoadBalancing::LoadBalancer
+<shardy> which is implemented by the class I referenced above
+<pavan> shardy: Oh yes. Thanks.
+<shardy> see resource_mapping() in each file, which maps the template names to the source-code classes
+<pavan> shardy: the code is very neat and easily understandable.
+<pavan> shardy: in autoscalingmultiazsample.template file 
+<pavan> in webserveruppolicy, in properties section
+<pavan> autoscalinggroupname, there is a reference to a method. where is the method defined?
+<shardy> pavan: you mean { "Ref" : "WebServerGroup" }?
+<shardy> That is referring to the WebServerGroup resource, by the Ref: intrinsic function
+<shardy> http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-ref.html
+<shardy> What Ref: gives you varies a bit depending on the resource type
+<shardy> In the case of AWS::AutoScaling::AutoScalingGroup it gives us a unique name definining the WebServerGroup scaling group in the stack represented by the template
+<shardy> See the FnGetRefId() function in the code
+* pfreund has quit (Remote host closed the connection)
+<pavan> I'm looking into it.
+<pavan> shardy: where is the WebServerGroup implemented?
+<pavan> or is it just a unique name? which doesn't have any significance
+<shardy> pavan: It's just a name, the "Type" field defines the resource type
+<shardy> so you can e.g cd heat/engine/resources/ && grep "AWS::AutoScaling::AutoScalingGroup" ./*
+<shardy> pavan: There's a class AutoScalingGroup which implements the AWS::AutoScaling::AutoScalingGroup resource type, in autoscaling.py
+<shardy> And WebServerGroup is just an instance of AutoScalingGroup defined in the template
+<pavan> Yes. I saw that.
+<pavan> Oh okay. 
