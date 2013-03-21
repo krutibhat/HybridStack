@@ -53,6 +53,7 @@ So , our assumption now is that we have one host that will be communicate with E
 
 This is the proposed solution for now to Provision VM's...
 
+
 Nova-api->Nova-Compute-api->Nova-Scheduler(Multi-Scheduler)
 ###Multi-Scheduler is a Scheduler that can chose different Schedulers Based on Flags.
 (Multi-Scheduler -> Existing Filter Scheduler) OR (Multi-Scheduler -> Hybrid Scheduler) #Scaling Policies will decide this i.e query the HEAT API.
@@ -84,5 +85,17 @@ Use HEAT again to Scale-Down
 Keep in mind that all this is by just using the API's of different services OpenStack provides and there is no change whatsoever being done within the Code of of each service.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Heat and LBaaS
+-------------------------
+1. Heat is basically used for auto scaling. We define policies using what is known as templates.
+Using heat and LBaaS for autoscaling,we will have a proper load balancing and auto scaling mechanism.
+2. But a definite problem we face is, are they compatible with each other? Can they be used together?
+3. If we use LBaaS, while bursting to public cloud, push it to Elastic Load Balancer?
+4. Access HEAT-api at the scheduler level. Possible?
+5. Does LBaaS already have an auto scaling policy of its own?
+
+
 
 A Demo Use-Case of our project would be to use OpenShift. OpenShift basically creates a PaaS layer using existing infrastructure. Check it out -> https://openshift.redhat.com/app
