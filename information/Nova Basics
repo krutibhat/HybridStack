@@ -1,0 +1,59 @@
+Nova Architecture Basics
+OpenStack is a collection of open source technologies delivering a massively scalable cloud operating system.
+
+What should it provide ?
+  1.)Users to register/manage cloud instances
+	2.)Custom images of OS
+	3.)Configure and operate cloud infrastructure
+
+4 kinds of users
+	1.)developers
+	2.)devops (leads etc)
+	3.)owners (Consumer) 
+	4.)operators(Admin)
+	for more detailed refer this image
+	http://c204396.r96.cf1.rackcdn.com/nova-cactus-conceptual.gif
+
+Broad overview of NOVA architecture
+http://c204396.r96.cf1.rackcdn.com/nova-cactus-logical.gif
+
+Two main Varieties
+1.)WSGI applications to receive and mediate API calls (nova-api, glance-api, etc.) 
+	You can call these as WEB ROLES
+2.)Worker daemons to carry out orchestration tasks (nova-compute, nova-network, nova-schedule, etc.)
+	You can call these as WORKER ROLES
+
+NOVA-API
+nova-api is like a cloud controller all the API request come to nova-api first.We can use either Open Stack APIS or Amazon EC2 APIs(Just the apis not the service) to communicate with the nova-api.
+
+NOVA-SCHEDULE
+Decides which instances could be run(From the queue of request) based on available resources.It also decide on which end host it will run.
+This is a pluggable architecture so we can write our own scheduler.
+(I feel this is one of the place where we should look into deeper)
+
+NOVA-COMPUTE
+Creates and terminates instances.
+This is the one which launches the instance(KVM instance for example).
+
+NOVA-VOLUME
+Allows attaching and detaching of persistent storage(Like Amazons Elastic Block Storage). It can use variety of providers like iSCSI or AoE
+
+NOVA-NETWORK(Quantum Now)
+Accepts networking tasks from the Queue works similar to nova-compute and volume(:P)
+
+QUEUE
+Central hub for message passing .
+(Recommended to tryout simple message passing using Rabbitmq to understand it better)
+
+HORIZON
+The openstack Dashboard is built using django.
+
+GLANCE
+	1.)GLANCE-API - Accepts APi calls this like a recieving window all the request pass through this
+	2.)GLANCE-REGSTRY - metadata about the images present 
+	3.)IMAGE-STORE - image blobs are stored here
+----------------------------------------------------------------------------------------------------------------------
+
+Conceptual mapping of nova apis
+Check this image out to get better understanding
+http://c204396.r96.cf1.rackcdn.com/nova-cactus-conceptual-coverage.gif
