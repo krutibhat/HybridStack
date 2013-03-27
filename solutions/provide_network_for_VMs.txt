@@ -1,0 +1,74 @@
+There are a couple of ways we could go about providing network access to the VM's. Here are the assumed ways. Not sure if either of them will work. Lots of half baked knowledge here, since it's networking :P. I'd suggest you read the documentation that contains the networking architecture of openstack in the openstack network admin manual and get a grasp of the deployment architectures first before proceeding, since that should help with better though process and hopefully correct the many errors in this file. This file will most likely be purged. But here goes anyway:
+
+
+So now, we're now talking about provisioning network to our newly spawned Instances within EC2. How do we get access to those VM's from our private cloud. So to say, our problem lies on how to route our networking requests to the public cloud. Here are a few suggestions that may or may not work. This is all in context of the virt driver which will update objects or call functions to do it.
+
+1 - Update the Instance Info Cache for Networking.
+    The Instance Info Cache looks something like this:
+[{u'address': u'fa:16:3e:57:b7:69',
+  u'devname': None,
+  u'id': u'f63bfcc7-0e6f-42df-933d-8e558cd43af8',
+  u'meta': {},
+  u'network': {u'bridge': u'br100',
+               u'id': u'c9bfd51b-2889-4ea8-82f0-f07759297181',
+               u'label': u'private',
+               u'meta': {u'bridge_interface': u'eth0',
+                         u'multi_host': True,
+                         u'should_create_bridge': True,
+                         u'tenant_id': None},
+               u'subnets': [{u'cidr': u'192.168.0.0/20',
+                             u'dns': [{u'address': u'8.8.4.4',
+                                       u'meta': {},
+                                       u'type': u'dns',
+                                       u'version': 4}],
+                             u'gateway': {u'address': u'192.168.0.1',
+                                          u'meta': {},
+                                          u'type': u'gateway',
+                                          u'version': 4},
+                             u'ips': [{u'address': u'192.168.0.2',
+                                       u'floating_ips': [],
+                                       u'meta': {},
+                                       u'type': u'fixed',
+                                       u'version': 4}],
+                             u'meta': {u'dhcp_server': u'192.168.0.3'},
+                             u'routes': [],
+                             u'version': 4},
+                            {u'cidr': None,
+                             u'dns': [],
+                             u'gateway': {u'address': None,
+                                          u'meta': {},
+                                          u'type': u'gateway',
+                                          u'version': None},
+                             u'ips': [],
+                             u'meta': {u'dhcp_server': u'192.168.0.3'},
+                             u'routes': [],
+                             u'version': None}]},
+  u'ovs_interfaceid': None,
+  u'qbg_params': None,
+  u'qbh_params': None,
+  u'type': u'bridge'}]
+
+I'm assuming you'd have to update them accordingly to gain access to EC2.
+
+Issues/Doubts
+-------------
+There are different Network Architectures present out there Eg: Flat DHCP,VLAN. Some give VM's public gateway access and some don't. By implementing this method, i'm assuming the architecture that do not allow VM's to connect to the internet will be considered trivial, since our gateway to EC2 will be through a public network for access to a VM. Lots of conceptual verification needed yet over here. (TODO)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2 - Create own VIF Driver and plug networks manually into bridge using one of the predefined bridgeInterfaceDrivers.
+
+So we know we have linux_net.py which apparently has all the tools to bridge networks, iptables , routes, etc.
+Make calls to that, create new gateway, use VPC, requests that come through for VM's that reside on the public cloud will be routed to the private subnet of the public cloud accordingly with the rules created using the tools. So to say that our routing table will be modified in such a way that those requests will route through a different gateway(i guess the public gateway within the private infrastructure).
+
+Issues/Doubts
+-------------
+Libvirt and other common hypervisors use this method. Is it necessary to follow the same method? 
+Do we get access to the Network API on nova-network or direct access to Linux_net.py is possible?
+
+
+
+ 
+
+
+
