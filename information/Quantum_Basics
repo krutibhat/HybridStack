@@ -1,0 +1,53 @@
+/* Today's documentation consists of how exactly quantum works at the openstack component level and some general basics*/
+
+/*Important links to follow*/
+https://wiki.openstack.org/wiki/Quantum/Quantum-floating-ips : can be referred for more info
+https://www.ibm.com/developerworks/mydeveloperworks/blogs/e93514d3-c4f0-4aa0-8844-497f370090f5/entry/quantum_folsom12?lang=en
+
+The use cases in this tutorial are
+
+* create IP ranges under a certain group, only available for admin role.
+*allocate an floating IP to a certain tenant, only available for admin role.
+*deallocate an floating IP from a certain tenant
+*associate an floating IP to a given instance
+*disassociate an floating IP from a certain instance
+
+Note: The quantum server should be deployed on the cloud controller.
+plugin agent runs with nova-compute, which maps the virtual networks to actual network environment so that to assure the connectivity of VMs.
+DHCP agent runs per-subnet.
+
+
+
+The design flow.
+
+The nova network api contacts the quantum CLI lib which inturn contacts the quantum server via api's to send requests, once the ip's are created/allocated they are updated in the quantum db. The quantum agent  which will be running on every compute host will actually implement the floating ip's.
+
+
+
+
+
+CATEGORY OF NETWORKS IN QUANTUM.
+
+network is divided into physical network and virtual network in quantum. the network object in quantum model is for virtual networks. we identify each physical network as a name in plugin's configure file. Physical network is actual existing network in the infrastructure.  It may be a VLAN with a given vlan id, or a flat network. Virtual networks are realized by a given kind of physical network via network biding object. Virtual networks also are divided into tenant network or provider network. But most of the time, we cannot see much difference between them. If we provide the physical network name, type and segment id, it is a provider network, or we are creating a tenant network. Tenant network's network binding object is selected from a pool, defined in configure file.
+
+
+
+Networks can be created in 4 combo's
+
+* private internal networks: which cannot be accessed by external networks.
+* Shared internal networks : which can be shared by multiple private networks, they can be connected at L2 using switches.
+* Private external networks(only tenant can configure interfaces) : where an interface can be configured on the router for floating ip's to access the internet.
+* Shared external networks: where multiple tenants sharing the networks can configure the interfaces.
+
+
+** Collaboration among Quantum Components
+
+nova boot will get into compute driver, which will call quantum api to create port
+quantum-server creates the port object and allocates it with ip address from subnets
+quantum-server notifies quantum-dhcp agent with the created port object
+quantum-dhcp agent configs the dhcp server with the port object, such as IP, Mac, gateway and routes
+compute-driver gets the network information, and then create port on br-int ovswitch, and then starts the VM with a tap device attached on the ovs port.
+ovs-quantum-agent detects and gets to know there is a new ovs port created
+ova-quantum-agent asks information from quantum-server
+ova-quantum-agent set up the port, such as the flows and vlan id of the ovs port. After this step, the VM's network is connected.
+VM gets the IP address with the dhcp client.
