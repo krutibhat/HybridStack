@@ -1,0 +1,4 @@
+- The DHCP server(dnsmasq) is responsible for handing out IPs to the VMs. But later in the below link, it says "For every instance, nova will allocate a fixed IP address and configure dnsmasq with the MAC/IP pair for the VM, i.e. dnsmasq doesn't take part in the IP address allocation process, it only hands out IPs according to the mapping done by nova." But isnt that the function of the nova-network , in fact, its the function of the DHCP server to allocate IPs right? why is nova doing it? 
+- http://docs.openstack.org/folsom/openstack-compute/admin/content/networking-options.html
+- I didnt understand by the meaning of listening to a port by the EC2 API.
+-	Link: http://docs.openstack.org/folsom/openstack-compute/admin/content/networking-options.html
