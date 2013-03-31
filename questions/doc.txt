@@ -1,4 +1,11 @@
-- The DHCP server(dnsmasq) is responsible for handing out IPs to the VMs. But later in the below link, it says "For every instance, nova will allocate a fixed IP address and configure dnsmasq with the MAC/IP pair for the VM, i.e. dnsmasq doesn't take part in the IP address allocation process, it only hands out IPs according to the mapping done by nova." But isnt that the function of the nova-network , in fact, its the function of the DHCP server to allocate IPs right? why is nova doing it? 
+- The DHCP server(dnsmasq) is responsible for handing out IPs to the VMs. But later in the below link, it says "For every instance, nova will allocate a fixed IP address and configure dnsmasq with the MAC/IP pair for the VM, i.e. dnsmasq doesn't take part in the IP address allocation process, it only hands out IPs according to the mapping done by nova." But isnt that the function of the nova-network , in fact, its the function of the DHCP server to allocate IPs right? why is nova doing it?
+
+Yes, depending on the network driver specified(i.e either Nova-Network or Quantum), ip will be allocated accordingly by that driver. dnsmasq is actually being used. Nova-network eventually calls upon dnsmasq to allocate the ip later. A decent way to find out how this is happening is to trace using a python debugger of your choice :). Set breakpoints and trace your way ahead or read the source code.  
+ 
 - http://docs.openstack.org/folsom/openstack-compute/admin/content/networking-options.html
 - I didnt understand by the meaning of listening to a port by the EC2 API.
 -	Link: http://docs.openstack.org/folsom/openstack-compute/admin/content/networking-options.html
+
+So, assuming you have a fair understanding of ports, it's simply the port in which it'll serve EC2 API requests. So to say, OpenStack is EC2-API compatible i.e you can use the EC2 API to communicate with OpenStack.
+
+REF: http://docs.openstack.org/trunk/openstack-compute/admin/content/configuring-ec2-API.html
