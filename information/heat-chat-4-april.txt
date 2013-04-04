@@ -1,0 +1,126 @@
+<shardy> skanda: hi
+<skanda> Hope you remember me from the mailing list..
+<skanda> my instance is still failing at the waiting for resource completion at the command: yum -y makecache.
+<skanda> i've enabled all the settings specified in the gettingstarted file.
+<skanda> my instance has net connectivity.
+* trapni has quit (Quit: Leaving)
+<shardy> skanda: IME the only thing which causes the instance to get stuck at that point is lack of access to the yum repos
+<shardy> so I'm a bit confused...
+<skanda> my yum.log file which i've tailed
+<skanda> http://pastebin.com/5w5jefjU
+<skanda> but i can execute yum -y makecache outside it..
+* alexheneveld (~alex@31.68.5.46) has joined #heat
+<skanda> these are the commands i executed after creating the stack:
+<skanda> http://pastebin.com/ATPAswtj
+<skanda> i'm sorry if i'm disturbing you on the occassion of grizzly release.
+<shardy> skanda: Have you added the iptables rules to /etc/sysconfig/iptables to ensure they are persistent?
+<shardy> Just adding them on the CLI won't be enough, nova/libvirt will overwrite them
+<shardy> I'm still confused by the makecache thing though, your yum log shows the yum update working AFAICT
+<shardy> skanda: Are you using the prebuilt JEOS image, or one you built yourself?
+<jpeeler> this isn't on a f18 host by chance is it?
+<zaneb> shardy is apparently the #2 contributor to OpenStack: http://bitergia.com/public/reports/openstack/2013_04_grizzly/
+<zaneb> congrats :D
+<SpamapS> are we doc sprinting today?
+<zaneb> SpamapS: it's more of a wade through a deep XML swamp
+<shardy> SpamapS: I tried to, but got too scared by the openstack-manuals build system and XML
+<skanda> yes. i'm using F17 images.
+<shardy> zaneb: wow, didn't expect that :)
+<SpamapS> zaneb: surely there are docbook authoring methods that don't expose XML to technical writers?
+<shardy> Huge pile of bugfixes paid off ;)
+* zaneb must work harder...
+<skanda> shardy: its not persistent across reboot right? for now, it should stay i guess.
+<shardy> SpamapS: the reccomended method is to use a closed source editor or eclipse plugin
+<shardy> I'm not prepared to to either
+<shardy> There are notes about using emacs too, but..
+* shardy sighs and goes back to vim
+<shardy> s/to to/to do/
+<shardy> terrible typing today, need more coffee ;)
+<SpamapS> shardy: http://www.kaczanowscy.pl/tomek/2010-09/a-perfect-environment-for-docbook ?
+<shardy> skanda: I add the rules to /etc/sysconfig/iptables, then reboot to ensure libvirt has got the new table cached
+<shardy> otherwise nova seems to blow away the new rules every time a new instance is launched
+<shardy> SpamapS: thanks, looks helpful
+* alexheneveld has quit (Ping timeout: 256 seconds)
+<skanda> shardy: ok, i'll try that.
+<skanda> but why isn't yum -y makecache working?
+<shardy> skanda: I still don't understand that tbh, if it was firewall rules you'd see a failure at the end of the provisioning during cfn-signal
+<skanda> shardy: :|
+<shardy> I'm actually wondering if cfn-init is crashing, hence not logging anymore, hence the question about where the image came from
+<skanda> how to check if cfn-init is crashing?
+<skanda> but it wouldn't let me login in to instance only right?
+<shardy> skanda: use ps to see if it's still running when you log in, and/or re-run it manually
+<shardy> The ssh keys are installed by nova/cloud-init so you would still be able to log in even if cfn-init fails
+<shardy> jpeeler: re your F18 comment, have you also been having problems?  I've been trying to get F18 guests working, and there are multiple problems with boto, cloud-init and SSH keys AFAICT
+<jpeeler> my only comment was going to be to ensure the masquerade zone had been checked in firewall-config. i don't think it is by default
+<shardy> jpeeler: Oh right, I mean F18 guests not host
+<jpeeler> right, haven't tried f18 guest yet actually. beyond time for that at this point
+<shardy> jpeeler: I think I understand the problems now, ref bug 1158906
+<uvirtbot> Launchpad bug 1158906 in heat "heat broken with cloud-init 0.7.1" [High,In progress] https://launchpad.net/bugs/1158906
+<shardy> but not quite fully tested out the fixes yet
+<skanda> shardy: haha. running ps is not helpful at all. Lists only 2 processes running.
+<shardy> skanda: ps auxf?
+<shardy> skanda: ps auxf | grep cfn-init
+<skanda> yes. its running.
+<shardy> skanda: and you can wget http://mirror.bytemark.co.uk/fedora/linux//releases/17/Fedora/x86_64/os/repodata/repomd.xml
+<shardy> (or some other mirror)
+<ttx> you guys want a stable/grizzly branch ?
+<skanda> shardY; so is the problem with my images?
+<shardy> ttx: sounds like a good idea
+<shardy> sdake:^^
+<shardy> skanda: Did the wget work?
+<skanda> inside the instance?
+<shardy> yes
+<skanda> one sec.
+<skanda> yes. it worked.
+<shardy> skanda: So if you wait, the makecache should finish (it may take a while), then the log output should indicate packages being installed
+<shardy> You could also tcpdump either on the instance or the host, so you can verify the traffic to the repos
+* pfreund has quit (Quit: Quitte)
+<skanda> shardy: you were right. it did finish.
+<skanda> but what can be done now? it has already timed out?
+<skanda> shardy: any idea why it took so much to finish?
+<shardy> skanda: Is your internet connection very slow?
+<shardy> If so you may need to cache locally either via a local mirror or squid cache?
+<skanda> here's the output of the log file:
+<skanda> ok, so yum -y makecache is similar to running sudo apt-get update && apt-get upgrade?
+<skanda> i get 60 kbps :\
+<shardy> skanda: makecache is just creating a local cache of repository metadata, but it is still probably pulling down quite a lot of data
+<shardy> your connection speed sounds like the issue
+<skanda> any idea if i can stop it? 
+<skanda> only that command..
+<shardy> skanda: I think you need to create a local mirror, and rebuild your jeos with a yum.repos.d entry pointing at that mirror
+<shardy> you could probably create a usable mirror with packages from a DVD iso if you don't care about updates and don't want to mirror them
+<skanda> ok, there must be the time limit for querying the resources right/
+<skanda> i can extend it?
+<skanda> for the time being?
+<shardy> skanda: yes, you can just add time to the WaitCondition timeout as a workaround
+<skanda> it takes 20 mins to execute the command yum -y makecache :|
+<shardy> skanda: It's the LoadBalancer resource which is timing out right?
+<skanda> so i add this in the handle_create method in wait_condition.py file?
+<sdake> skanda your network (nova) is not operational
+<skanda> yes.
+<skanda> sdake: can you explain?
+<sdake> the load balancer vm needs a network to run yum makecache
+<sdake> if there is no network, there is no load balancer
+<skanda> it does have a network..
+<shardy> https://github.com/openstack/heat/blob/master/heat/engine/resources/loadbalancer.py
+<skanda> no, the loadbalancer instance is active..
+<shardy> Line 179, change Timeout 600 to some big number
+<skanda> i can ping and ssh into it..
+<sdake> can you get info from inside the vm?
+<sdake> try ssh into the instance
+<skanda> i did..
+<sdake> then wget www.fedoraproject.org
+<skanda> everything works..
+<shardy> sdake: the issue is WaitCondition timeouts due to an extremely slow internet connection
+<skanda> sdake: 60 kbps :|
+<sdake> that could be another possibility
+<shardy> or at least that seems to be the case
+<sdake> try making a local cache
+<skanda> sdake: sorry but how can i make one and direct my loadbalancer vm to use that?
+<sdake> i believe asalkeld was going to make a blog post about it
+<shardy> There were notes on setting up a squid cache on the github wiki, but looks like they didn't make the transistion to the openstack wiki
+<skanda> it would be great if there's a link to the blog post..
+<skanda> because 20 mins is just unacceptable..
+<shardy> skanda: On a fast connectio, or with a local mirror, it will be <1min
+<shardy> connection
+<skanda> shardy: yeah after seeing the youtube video showing the autoscaling demo..
+<skanda> i was convinced .. but slow internet connection is a huge bitch.
