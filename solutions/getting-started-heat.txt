@@ -31,6 +31,8 @@ Or it will go to a error state.
 
 
 Note: You have to make few code modifications accordingly and make it work..
-It had to increase the timout period to a larger value and recompile the HEAT.
+I had to increase the timeout period to a larger value and recompile the HEAT source code.
 
-Change settings in the wait_condition.py file in resources/
+Change settings in the wait_condition.py file in resources/ dir.
+
+Now, we have to provision ec2 instances and make it work with HEAT. (Top Priority).
